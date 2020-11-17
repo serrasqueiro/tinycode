@@ -10,10 +10,13 @@
 
 
 import sys
-from waxpage.redit import char_map, CharMap, BareText
+from waxpage.redit import char_map, CharMap, BareText, \
+     LATIN1_TEXT
 
 _VERBOSE = False
 _READ_AS_UTF = False
+SPECIAL_TXC = (".txc",
+               )
 
 
 def main():
@@ -42,18 +45,40 @@ def test_redit_test(out, err, args):
             assert is_ok
         return 0
 
+    assert err
     debug = 0 if not _VERBOSE else 1
-    dosCR = ""
+    opts = {"dosCR": "",
+            }
     param = args
     while param and param[0].startswith("-"):
         if param[ 0 ]=='--dos':
             del param[ 0 ]
-            dosCR = "\r"
+            opts["dosCR"] = "\r"
             continue
         return None
     if param == []:
         return test_show(char_map)
-    name = param[0]
+    code = dump_texts(out, param, opts, debug)
+    return code
+
+
+def dump_texts(out, param, opts, debug=0) -> int:
+    """ Dump text files """
+    for name in param:
+        if len(param) > 1:
+            print("# dump_text:", name)
+        dump_text(out, name, opts, debug)
+    return 0
+
+
+def dump_text(out, name, opts, debug=0):
+    """ Dump one text file """
+    if name.endswith(SPECIAL_TXC):
+        with open(name, "r", encoding=LATIN1_TEXT) as file:
+            data = file.read()
+            print(char_map.simpler_ascii(data))
+        return 0
+
     tred = BareText(name)
     if _READ_AS_UTF:
         is_ok = tred.utf_file_reader()
@@ -62,10 +87,10 @@ def test_redit_test(out, err, args):
     print("tred, ok?{}: {}".format(is_ok, tred))
     if is_ok:
         for line in tred.lines:
-            out.write(line + dosCR + "\n")
+            out.write(line + opts["dosCR"] + "\n")
+    print("Debug:", name)
     if debug > 0:
-        dump_bare(err, tred)
-    return 0
+        dump_bare(out, tred)
 
 
 def dump_bare(out, tred, exclude=None, debug=0):

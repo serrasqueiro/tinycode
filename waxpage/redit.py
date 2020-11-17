@@ -13,6 +13,7 @@
 
 import sys
 
+LATIN1_TEXT = "ISO-8859-1"
 
 _OTHER_LOOKUP_LIST = [
     (0xae,   "(R)", "&reg;", "Registered trademark", 0),
@@ -226,7 +227,7 @@ class TextRed(BinStream):
         self.nonASCII7Str = "."
         self.lines = []
         self.extension = ( "", [""] )
-        self.set_filename( filename )
+        self.set_filename(filename)
         self.histogram = BasicHistogram()
         self.inEncoding = "ascii"
         self.top_init()
@@ -237,11 +238,12 @@ class TextRed(BinStream):
 
 
     def set_filename(self, filename):
+        assert isinstance(filename, str) or filename is None
         if filename:
             self._pname = filename
         else:
             self._pname = ""
-        pos = filename.rfind( "." )
+        pos = filename.rfind(".")
         coName = ""
         if pos > 0:
             ext = filename[pos:]
