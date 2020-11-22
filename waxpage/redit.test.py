@@ -28,20 +28,20 @@ def main():
 
 {prog} [filename]
 """)
-        code = 0
-    assert code == 0
-    sys.exit(code)
+    sys.exit(code if code else 0)
 
 
 def test_redit_test(out, err, args):
     """ Main module test! """
     def test_show(charmap):
         assert isinstance(charmap, CharMap)
-        s = "T\xe1bua on ch\xe3o em (C\xd4TE) C\xf4te Ivoir."
+        s = "T\xe1bua no ch\xe3o em (C\xd4TE) C\xf4te d'Ivoire"
         for x in [0, 1]:
             text = charmap.simpler_ascii(s, x)
             print(text)
-            is_ok = text=="Tabua on chao", "Ta'bua on cha~o em (COTE) Cote Ivor."
+            is_ok = text in ("Tabua no chao em (COTE) Cote d'Ivoire",
+                             "Ta'bua no cha~o em (C'OTE) C'ote d'Ivoire",
+                             )
             assert is_ok
         return 0
 

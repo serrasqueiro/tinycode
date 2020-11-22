@@ -15,6 +15,41 @@ import sys
 
 LATIN1_TEXT = "ISO-8859-1"
 
+_LATIN_CONV = (
+    (0xc1, 'A', "A'"),  # A-acute
+    (0xc9, 'E', "E'"),  # E-acute
+    (0xcd, 'I', "I'"),  # I-acute
+    (0xd3, 'O', "O'"),  # O-acute
+    (0xda, 'U', "U'"),  # U-acute
+    (0xe1, 'a', "a'"),  # a-acute
+    (0xe9, 'e', "e'"),  # e-acute
+    (0xed, 'i', "i'"),  # i-acute
+    (0xf3, 'o', "o'"),  # o-acute
+    (0xfa, 'u', "u'"),  # u-acute
+    (0xc3, 'A', "A~"),  # A-tilde
+    (0xd5, 'O', "O~"),  # O-tilde
+    (0xe3, 'a', "a~"),  # a-tilde
+    (0xf5, 'o', "o~"),  # o-tilde
+    (0xc0, 'A', "'A"),  # A-grave
+    (0xd2, 'O', "'O"),  # O-grave
+    (0xe0, 'a', "'a"),  # a-grave
+    (0xf2, 'o', "'o"),  # o-grave
+    (0xc2, 'A', "A^"),  # A-circ (circumflex)
+    (0xca, 'E', "E^"),  # E-circ
+    (0xce, 'I', "I^"),  # I-circ
+    (0xd4, 'O', "O^"),  # O-circ
+    (0xe2, 'a', "a^"),  # a-circ
+    (0xea, 'e', "e^"),  # e-circ
+    (0xee, 'i', "i^"),  # i-circ
+    (0xf4, 'o', "o^"),  # o-circ
+    (0xc7, 'C', "C,"),  # C-cedil
+    (0xe7, 'c', "c,"),  # c-cedil
+    (0x0, '', ''))
+
+# See for instance:
+#	https://www.w3schools.com/charsets/ref_html_entities_a.asp
+
+
 _OTHER_LOOKUP_LIST = [
     (0xae,   "(R)", "&reg;", "Registered trademark", 0),
     (0xab,   "<<", "&laquo;", "Angle quotation mark (left)", 1),
@@ -43,27 +78,7 @@ class CharMap:
         # Hint: for Unicode Character Map, e.g. UCS2 value 0x201c,
         #       see https://unicodemap.org/details/0x201c/index.html
         self.otherLookup = _OTHER_LOOKUP_LIST
-        conv = ((0xc1, 'A', "A'"),  # A-acute
-                (0xc9, 'E', "E'"),  # E-acute
-                (0xcd, 'I', "I'"),  # I-acute
-                (0xd3, 'O', "O'"),  # O-acute
-                (0xda, 'U', "U'"),  # U-acute
-                (0xe1, 'a', "a'"),  # a-acute
-                (0xe9, 'e', "e'"),  # e-acute
-                (0xed, 'i', "i'"),  # i-acute
-                (0xf3, 'o', "o'"),  # o-acute
-                (0xfa, 'u', "u'"),  # u-acute
-                (0xc3, 'A', "A~"),  # A-tilde
-                (0xd5, 'O', "O~"),  # O-tilde
-                (0xe3, 'a', "a~"),  # a-tilde
-                (0xf5, 'o', "o~"),  # o-tilde
-                (0xc0, 'A', "'A"),  # A-grave
-                (0xd4, 'O', "'O"),  # O-grave
-                (0xe0, 'a', "'a"),  # a-grave
-                (0xf4, 'o', "'o"),  # o-grave
-                (0xc7, 'C', "C,"),  # C-cedil
-                (0xe7, 'c', "c,"),  # c-cedil
-                (0x0, '', ''))
+        conv = _LATIN_CONV
         # Check if there are any repeated ASCII values
         idx = 0
         for tup in conv:
@@ -124,9 +139,9 @@ class CharMap:
                     chars = "?"
                 else:
                     if altText == 0:
-                        chars = self.subst[ i ]
+                        chars = self.subst[i]
                     else:
-                        chars = self.alt_subst[ i ]
+                        chars = self.alt_subst[i]
                 s += chars
             return s
         elif isinstance(data, (list, tuple)):
@@ -151,7 +166,7 @@ class CharMap:
     def find_other_lookup(self, asciiNum):
         assert isinstance(asciiNum, int)
         for tup in self.otherLookup:
-            a = tup[ 0 ]
+            a = tup[0]
             if a == asciiNum:
                 return tup
         return None
@@ -259,7 +274,7 @@ class TextRed(BinStream):
 
 
     def file_coname(self):
-        return self.extension[ 1 ][ 0 ]
+        return self.extension[1][0]
 
 
     def extension_matches(self, aStr):
@@ -308,11 +323,11 @@ class TextRed(BinStream):
         if f:
             if isinstance(self.buf, bytes):
                 #mayHaveBOM = len(self.buf) >= 2
-                hasBOM = self.set_from_octets( self.buf[ 0 ], self.buf[ 1 ] )
+                hasBOM = self.set_from_octets( self.buf[0], self.buf[1] )
             else:
                 hasBOM = False
             if hasBOM:
-                self.add_content(self.buf[ 2: ], 2)
+                self.add_content(self.buf[2:], 2)
             else:
                 self.set_textlike()
                 self.add_content(self.buf, 1)
