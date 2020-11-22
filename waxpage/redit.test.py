@@ -121,10 +121,12 @@ def try_markdown(md_file) -> int:
         count = hist.seen[ord(letter)]
         count += hist.seen[ord(upper)]
         print(f"Letter {upper}: {count}")
+    is_ok = shown = get_pangram("pt")
+    assert is_ok
     return 0
 
 
-def get_pangram(country):
+def get_pangram(country="pt"):
     expected = ""
     if country == "pt":
         expected = "A noite, vovo Kowalsky ve o ima cair no pe do ping.im queixoso e vovo poe acucar no cha de tamaras do jabuti feliz (no pais)."
