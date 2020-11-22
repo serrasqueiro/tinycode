@@ -73,7 +73,7 @@ def dump_texts(out, param, opts, debug=0) -> int:
     return 0
 
 
-def dump_text(out, name, opts, debug=0):
+def dump_text(out, name, opts, debug=0) -> int:
     """ Dump one text file """
     if name.endswith(SPECIAL_TXC):
         with open(name, "r", encoding=LATIN1_TEXT) as file:
@@ -93,11 +93,13 @@ def dump_text(out, name, opts, debug=0):
     print("Debug:", name)
     if debug > 0:
         dump_bare(out, tred)
+    return 0
 
 
 def try_markdown(md_file) -> int:
     """ Try to check pangram at markdown! """
     pangram = ""
+    tal = 0
     try:
         file = open(md_file, "r", encoding=LATIN1_TEXT)
     except FileNotFoundError:
@@ -115,21 +117,56 @@ def try_markdown(md_file) -> int:
     tred.add_from_buffer(pangram)
     hist = tred.histogram
     shown = char_map.simpler_ascii(pangram)
-    print(f"Pangram: '{shown}'")
+    print(f"Pangram (len={len(pangram)}): '{shown}'")
     for letter in char_map.lowercase():
+        outras = 0
         upper = letter.upper()
         count = hist.seen[ord(letter)]
         count += hist.seen[ord(upper)]
-        print(f"Letter {upper}: {count}")
-    is_ok = shown = get_pangram("pt")
+        for oth in range(128, 256):
+            letra = char_map.simpler_ascii(chr(oth))
+            if letra == letter:
+                outras += hist.seen[oth]
+        print("Letter {}: {} {}{}".
+              format(upper, count, outras,
+                     f" (sum: {count+outras})" \
+                     if outras else ""),
+              tal)
+        tal += count + outras
+    count, outras, unconv = 0, 0, []
+    for letter in pangram:
+        num = ord(letter)
+        letra = char_map.simpler_ascii(letter)
+        if letra.isalpha():
+            count += 1
+            outras += int(num >= 128)
+        else:
+            if num >= 128:
+                note = f"symbol={num}d, hex=0x{num:02x}"
+                unconv.append(note)
+    nunc = len(unconv)
+    is_ok = shown == get_pangram("pt")
+    print(f"Letter (all): {tal}+{nunc}, {count+outras} ({count}+{outras})",
+          f"ok? {is_ok}")
+    print(f"""
+Example:
+	94 un-accented letters from pangram;
+	1 unconverted (in this case {nunc})
+	107 letters from pangram (including accented): ({count}+{outras})
+""")
+    if unconv:
+        print("Unconverted follows:\n" + "\n".join(unconv))
     assert is_ok
     return 0
 
 
-def get_pangram(country="pt"):
+def get_pangram(country="pt") -> str:
+    """ Returns a selected pangram depending on country. """
     expected = ""
     if country == "pt":
-        expected = "A noite, vovo Kowalsky ve o ima cair no pe do ping.im queixoso e vovo poe acucar no cha de tamaras do jabuti feliz (no pais)."
+        expected = "A noite, vovo Kowalsky ve o ima cair " + \
+                   "no pe do ping.im queixoso e vovo poe acucar " + \
+                   "no cha de tamaras do jabuti feliz (no pais)."
     assert expected
     return expected
 

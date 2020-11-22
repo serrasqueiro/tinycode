@@ -8,7 +8,7 @@
 # Replaces old 'redito' module.
 
 # pylint: disable=missing-docstring, unused-argument, no-else-return, invalid-name
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes, no-self-use
 
 
 import sys
@@ -172,14 +172,17 @@ class CharMap:
                 return tup
         return None
 
-    def lowercase(self):
+    @staticmethod
+    def lowercase():
         return string.ascii_lowercase
 
-    def uppercase(self):
+    @staticmethod
+    def uppercase():
         return string.ascii_uppercase
 
-    def ascii_letters(self):
-        return self.lowercase() + self.uppercase()
+    @staticmethod
+    def ascii_letters():
+        return string.ascii_lowercase + string.ascii_uppercase
 
 
 class BasicHistogram:
@@ -237,6 +240,8 @@ class BinStream:
 
 class TextRed(BinStream):
     """ TextRed abstract class """
+
+    # pylint: disable=no-member
     buf = ""
     _pname = ""
 
@@ -332,7 +337,7 @@ class TextRed(BinStream):
                 self.set_textlike()
                 self.buf = f.read()
         if f:
-            add_from_buffer(self.buf)
+            self.add_from_buffer(self.buf)
         return isOk
 
     def add_from_buffer(self, buffer) -> bool:
