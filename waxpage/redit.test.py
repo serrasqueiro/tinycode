@@ -31,16 +31,16 @@ def main():
     sys.exit(code if code else 0)
 
 
-def test_redit_test(out, err, args):
+def test_redit_test(out, err, args) -> int:
     """ Main module test! """
-    def test_show(charmap):
+    def test_show(charmap) -> int:
         assert isinstance(charmap, CharMap)
         s = "T\xe1bua no ch\xe3o em (C\xd4TE) C\xf4te d'Ivoire"
-        for x in [0, 1]:
-            text = charmap.simpler_ascii(s, x)
+        for kind in (0, 1):
+            text = charmap.simpler_ascii(s, kind)
             print(text)
             is_ok = text in ("Tabua no chao em (COTE) Cote d'Ivoire",
-                             "Ta'bua no cha~o em (C'OTE) C'ote d'Ivoire",
+                             "Ta'bua no cha~o em (CO^TE) Co^te d'Ivoire",
                              )
             assert is_ok
         return 0
@@ -56,9 +56,11 @@ def test_redit_test(out, err, args):
             opts["dosCR"] = "\r"
             continue
         return None
-    if param == []:
-        return test_show(char_map)
-    code = dump_texts(out, param, opts, debug)
+    if param:
+        code = dump_texts(out, param, opts, debug)
+    else:
+        code = test_show(char_map)
+        try_markdown("howto.md")
     return code
 
 
@@ -91,6 +93,43 @@ def dump_text(out, name, opts, debug=0):
     print("Debug:", name)
     if debug > 0:
         dump_bare(out, tred)
+
+
+def try_markdown(md_file) -> int:
+    """ Try to check pangram at markdown! """
+    pangram = ""
+    try:
+        file = open(md_file, "r", encoding=LATIN1_TEXT)
+    except FileNotFoundError:
+        file = None
+    if file is None:
+        print("Skipped test (file not there):", md_file)
+        return 2
+    lines = file.read().splitlines()
+    for line in lines:
+        if line.startswith(">"):
+            pangram = line[1:].strip()
+            break
+    tred = BareText(md_file)
+    #tred.file_reader()
+    tred.add_from_buffer(pangram)
+    hist = tred.histogram
+    shown = char_map.simpler_ascii(pangram)
+    print(f"Pangram: '{shown}'")
+    for letter in char_map.lowercase():
+        upper = letter.upper()
+        count = hist.seen[ord(letter)]
+        count += hist.seen[ord(upper)]
+        print(f"Letter {upper}: {count}")
+    return 0
+
+
+def get_pangram(country):
+    expected = ""
+    if country == "pt":
+        expected = "A noite, vovo Kowalsky ve o ima cair no pe do ping.im queixoso e vovo poe acucar no cha de tamaras do jabuti feliz (no pais)."
+    assert expected
+    return expected
 
 
 def dump_bare(out, tred, exclude=None, debug=0):

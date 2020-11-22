@@ -37,8 +37,9 @@ def main():
 Options:
    -v              Verbose mode
    -s              Simple ASCII output (or --simple)
+   --try-latin-1   Try reading Latin-1 (or --try-ISO-8859-1)
 """
-    if _TRY_READ_AS_UTF8:
+    if not _TRY_READ_AS_UTF8:
         msg += """   --try           Try using UTF-8 as input
 """
     msg += f"\nUse\n   {prog} -h (or --help)\nto show this help."
@@ -52,6 +53,7 @@ def dumper(out, err, args):
     """ Main module test! """
     opts = {"verbose": 0,
             "simple": False,
+            "try-input": "",
             "try-utf8": _TRY_READ_AS_UTF8,
             "enc-out": DEF_ENCODE_OUT,
             "out": None,
@@ -69,6 +71,13 @@ def dumper(out, err, args):
         if param[0] == '--try':
             del param[0]
             opts["try-utf8"] = True
+            continue
+        if param[0] in ('--try-latin-1',
+                        '--try-ISO-8859-1',
+                        ):
+            opts["try-utf8"] = False
+            opts["try-input"] = param[0][len("--try-"):]
+            del param[0]
             continue
         if param[0] in ('--out', '-o'):
             assert not opts["out"]
@@ -99,7 +108,10 @@ def dumper(out, err, args):
 def dump(out, charmap, param, opts, debug=0) -> list:
     """ Dump files """
     errs = []
+    try_input = opts["try-input"]
     enc_in = "UTF-8" if opts["try-utf8"] else None
+    if try_input:
+        enc_in = try_input
     enc_out = opts["enc-out"]
     idx, verbose = 0, opts["verbose"]
     for name in param:
@@ -107,6 +119,9 @@ def dump(out, charmap, param, opts, debug=0) -> list:
         if is_stdin:
             file = sys.stdin
         else:
+            assert name
+            if verbose > 0:
+                print(f"Reading {name} as: {enc_in}")
             file = open(name, "r", encoding=enc_in)
         data = file.read()
         lines = data.splitlines()

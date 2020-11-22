@@ -12,6 +12,7 @@
 
 
 import sys
+import string
 
 LATIN1_TEXT = "ISO-8859-1"
 
@@ -171,10 +172,20 @@ class CharMap:
                 return tup
         return None
 
+    def lowercase(self):
+        return string.ascii_lowercase
+
+    def uppercase(self):
+        return string.ascii_uppercase
+
+    def ascii_letters(self):
+        return self.lowercase() + self.uppercase()
+
 
 class BasicHistogram:
     """ Basic histogram class """
     seen = []
+    semiEmpty = None
 
     def __init__(self, vMin=0, vMax=256):
         self.seen = []
@@ -321,18 +332,20 @@ class TextRed(BinStream):
                 self.set_textlike()
                 self.buf = f.read()
         if f:
-            if isinstance(self.buf, bytes):
-                #mayHaveBOM = len(self.buf) >= 2
-                hasBOM = self.set_from_octets( self.buf[0], self.buf[1] )
-            else:
-                hasBOM = False
-            if hasBOM:
-                self.add_content(self.buf[2:], 2)
-            else:
-                self.set_textlike()
-                self.add_content(self.buf, 1)
+            add_from_buffer(self.buf)
         return isOk
 
+    def add_from_buffer(self, buffer) -> bool:
+        if isinstance(buffer, bytes):
+            #mayHaveBOM = len(buffer) >= 2
+            hasBOM = self.set_from_octets(buffer[0], buffer[1])
+        else:
+            hasBOM = False
+        if hasBOM:
+            self.add_content(buffer[2:], 2)
+        else:
+            self.set_textlike()
+            self.add_content(buffer, 1)
 
     def add_content(self, data, ucs=1):
         if ucs == 2:
@@ -540,4 +553,5 @@ char_map = CharMap()
 # Test suite
 #
 if __name__ == "__main__":
+    # import importlib; importlib.reload(waxpage.redit); import waxpage.redit as redit
     print("Import, or see tests at redit.test.py")
