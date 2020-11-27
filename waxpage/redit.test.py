@@ -12,11 +12,10 @@
 import sys
 from waxpage.redit import char_map, CharMap, BareText, \
      LATIN1_TEXT
+from waxpage.txc import SPECIAL_TXC
 
 _VERBOSE = False
 _READ_AS_UTF = False
-SPECIAL_TXC = (".txc",
-               )
 
 
 def main():
