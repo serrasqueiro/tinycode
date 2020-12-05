@@ -76,7 +76,7 @@ class Dirs(GenDir):
             self._path = path
         for elem in os.scandir(self.get_path()):
             there.append((elem.name, elem))
-        return nodes
+        return there
 
     def by_dir(self) -> list:
         there = list()
