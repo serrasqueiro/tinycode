@@ -66,7 +66,9 @@ class Dirs(GenDir):
     def nodes(self, path=None) -> list:
         there = list()
         if path:
-            self._path = path
+            self._set_path(path)
+        elif not self._path:
+            self._set_path(CUR_DIR)
         for elem in os.scandir(self.get_path()):
             there.append((elem.name, elem))
         return there
@@ -101,6 +103,7 @@ class Dirs(GenDir):
         self.elements, self.paths, self.uxnames = [], [], []
 
     def _set_path(self, path) -> bool:
+        dprint('dir', f"Debug: _set_path({path}), type={type(path)}")
         self._path = None
         if isinstance(path, str):
             self._path = path
