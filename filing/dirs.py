@@ -38,6 +38,17 @@ class GenDir:
     def get_filters(self):
         return self._filters
 
+    def lettered_as(self, letter):
+        letter = letter.lower()
+        if letter.isalpha():
+            return letter
+        if letter.isdigit():
+            return self._alpha_sort[1]
+        return self._alpha_sort[2]
+
+    def latin_sort(self):
+        return "".join(self._alpha_sort)
+
 
 class Dirs(GenDir):
     """ Dir Scan (and listing) """
@@ -104,7 +115,7 @@ class Dirs(GenDir):
 
     def _set_path(self, path) -> bool:
         dprint('dir', f"Debug: _set_path({path}), type={type(path)}")
-        self._path = None
+        self.upath, self._path = "", None
         if isinstance(path, str):
             self._path = path
         elif isinstance(path, tuple):
@@ -165,6 +176,10 @@ class ADir(Dirs):
         if keep:
             os.chdir(keep)
 
+    def get_by(self, kind):
+        """ Returns the elements of latin-ordered dictionary. """
+        return self._latin_sort["@" + kind]
+
     def by_name(self):
         names = self._latin_sort.get("@names")
         if not names:
@@ -172,8 +187,10 @@ class ADir(Dirs):
                 "@names": None,
                 "@dirs": list(),
                 "@file": list(),
+                "@latin": dict(),
                 }
             self._order_by_name(self._latin_sort)
+            self._order_latin(self._latin_sort["@latin"])
         dprint('dir',
                "Latin sort:", list(self._latin_sort.keys()))
         names = self._latin_sort["@names"]
@@ -187,12 +204,26 @@ class ADir(Dirs):
             if not name:
                 continue
             if what == "d":
-                dct["@dirs"].append(name + "/")
+                s_name = name + "/"
+                dct["@dirs"].append(s_name)
             else:
-                dct["@file"].append(name)
+                s_name = name
+                dct["@file"].append(s_name)
         dct["@dirs"].sort(key=str.casefold)
         dct["@file"].sort(key=str.casefold)
         dct["@names"] = dct["@dirs"] + dct["@file"]
+        return True
+
+    def _order_latin(self, dct) -> bool:
+        for name in self.elements:
+            assert name
+            letter = self.lettered_as(name[0])
+            if letter in dct:
+                dct[letter].append(name)
+            else:
+                dct[letter] = [name]
+        for key in dct.keys():
+            dct[key].sort(key=str.casefold)
         return True
 
 

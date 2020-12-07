@@ -120,6 +120,9 @@ def _test_dirs(apath, num_args) -> dirs.Dirs:
     new = dirs.ADir(apath, filter_out="*~")
     names = new.by_name()
     print(f"Names at '{apath}':\n{joined_str(names)}")
+    latins = new.get_by("latin")
+    print("ADir get_by('latin') -->", latins)
+    print(f"latin_sort()={new.latin_sort()}")
     return check
 
 
