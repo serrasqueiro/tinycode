@@ -113,7 +113,8 @@ def _test_dirs(apath, num_args) -> dirs.Dirs:
         print(joined_str(check.uxnames, PRE))
         print(f"check.elements: {check.elements}\n")
         for name in check.elements:
-            assert not name.startswith("_")
+            if name.endswith(".py"):
+                assert not name.startswith("_")
         if last_elems:
             assert last_elems == check.elements
         last_elems = check.elements
