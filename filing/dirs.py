@@ -12,6 +12,7 @@ import os
 DEBUG = 0	# define 1 if you want to see debug
 UX_LETTER_FILE = "-"
 CUR_DIR = (".",)
+WIN_CASE_SENSITIVE = False
 
 
 class GenDir:
@@ -147,7 +148,7 @@ class Dirs(GenDir):
         elem, one = None, None
         for elem in os.scandir(apath):
             assert elem.name
-            this = os.path.join(bpath, elem.name)
+            this = join_ux_name(bpath, elem.name)
             dcode = user_show_entry(self._filters, elem.name, this)
             if dcode != 1:
                 continue
@@ -367,9 +368,13 @@ def is_within_filter(name, afilter) -> str:
     assert isinstance(afilter, (list, tuple))
     if not name:
         return ""
+    if os.name == "nt" and not WIN_CASE_SENSITIVE:
+        name = name.lower()
     for one in afilter:
         if one == "*":
             return one
+        if os.name == "nt" and not WIN_CASE_SENSITIVE:
+            one = one.lower()
         pos = one.find("*")
         if pos == -1:
             if name == one:
@@ -387,6 +392,13 @@ def is_within_filter(name, afilter) -> str:
             return one
     return ""
 
+def join_ux_name(base_path, name) -> str:
+    assert isinstance(base_path, str)
+    assert isinstance(name, str)
+    slash = "/" if base_path else ""
+    res = base_path + slash + name
+    # os.path.join(bpath, elem.name) -> would yield '\' in case of Windows
+    return res
 
 def joined_str(alist, pre="", post="\n") -> str:
     astr = ""

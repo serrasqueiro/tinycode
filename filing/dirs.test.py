@@ -103,7 +103,9 @@ def _test_dirs(apath, num_args) -> dirs.Dirs:
         apath = ""
     extra = "_*.py"	# exclude every python file starting with an underscore ('_')
     extra_2 = "*~"	# exclude any (Linux) backup file
-    check = dirs.Dirs(apath, filter_out=(extra, extra_2, "__pycache__", "__init__.py"))
+    extra_3 = "*.dat"	# exclude any '.dat' file (Windows)
+    outs = (extra, extra_2, extra_3, "__pycache__", "__init__.py")
+    check = dirs.Dirs(apath, filter_out=outs)
     print("check.by_dir():", check.by_dir())
     last_elems = None
     for idx in (1, 2,):
