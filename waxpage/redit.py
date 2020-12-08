@@ -7,7 +7,7 @@
 """
 # Replaces old 'redito' module.
 
-# pylint: disable=missing-docstring, unused-argument, no-else-return, invalid-name
+# pylint: disable=missing-docstring, unused-argument, invalid-name
 # pylint: disable=too-many-instance-attributes, no-self-use
 
 
@@ -45,6 +45,7 @@ _LATIN_CONV = (
     (0xf4, 'o', "o^"),  # o-circ
     (0xc7, 'C', "C,"),  # C-cedil
     (0xe7, 'c', "c,"),  # c-cedil
+    #	(8212, '-', "--"),  # m-dash (&mdash;)
     (0x0, '', ''))
 
 # See for instance:
@@ -69,9 +70,22 @@ class CharMap:
     """ CharMap class """
     subst, alt_subst = [], []
     otherLookup = []
+    _other_symbols = None
 
     def __init__(self):
         self._init_charmap()
+
+    def allow_symbols(self, allow=True):
+        self._other_symbols = None
+        if not allow:
+            return
+        symb = list()
+        self._other_symbols = dict()
+        for tup in self.otherLookup:
+            numeric = tup[0]
+            if numeric <= 0:
+                break
+            self._other_symbols[numeric] = (tup[1], tup[2])
 
     def _init_charmap(self):
         self.subst = ['.'] * 256
@@ -105,7 +119,7 @@ class CharMap:
                 assert asciiValue != ch[0]
             idx += 1
         # Start indexing:
-        idx = 32
+        idx = ord(' ')
         while idx <= 255:
             if 32 <= idx < 127:
                 chars = chr(idx)
@@ -131,36 +145,26 @@ class CharMap:
         return True
 
 
-    def simpler_ascii(self, data, altText=0):
+    def simpler_ascii(self, data, altText=0) -> str:
         s = ""
         if isinstance(data, str):
-            for c in data:
-                i = ord(c)
-                if i >= 256:
-                    chars = "?"
-                else:
-                    if altText == 0:
-                        chars = self.subst[i]
-                    else:
-                        chars = self.alt_subst[i]
-                s += chars
-            return s
-        elif isinstance(data, (list, tuple)):
+            return self._simple_string(data, altText)
+        if isinstance(data, (list, tuple)):
             res = []
             for a in data:
                 res.append(self.simpler_ascii(a, altText))
             return res
-        elif isinstance(data, dict):
+        if isinstance(data, dict):
             res = []
             for k, val in data.items():
                 s = self.simpler_ascii(val, altText)
                 res.append((k, s))
             return res
-        elif isinstance(data, (int, float)):
+        if isinstance(data, (int, float)):
             s = data
-        else:
-            #print("simpler_ascii(): Unsupported type:", type( data ))
-            assert False
+            return s
+        #print("simpler_ascii(): Unsupported type:", type( data ))
+        assert False
         return s
 
 
@@ -171,6 +175,25 @@ class CharMap:
             if a == asciiNum:
                 return tup
         return None
+
+    def _simple_string(self, data, altText):
+        s = ""
+        for achr in data:
+            i = ord(achr)
+            if i >= 256:
+                alts = self._other_symbols.get(i)
+                if alts:
+                    chars = alts[0]
+                else:
+                    chars = "?"
+            else:
+                if altText == 0:
+                    chars = self.subst[i]
+                else:
+                    chars = self.alt_subst[i]
+            s += chars
+        return s
+
 
     @staticmethod
     def lowercase():
@@ -424,10 +447,10 @@ class TextRed(BinStream):
                 s += "?"
             else:
                 col += 1
-                if c<127 or not self.skipNonASCII7bit:
+                if c < 127 or not self.skipNonASCII7bit:
                     s += chr( c )
                 else:
-                    if self.convertToLatin1 and c<256:
+                    if self.convertToLatin1 and c < 256:
                         conv = char_map.simpler_ascii(chr(c))
                         if c >= 127 and conv == '.':
                             other = char_map.find_other_lookup(c)
