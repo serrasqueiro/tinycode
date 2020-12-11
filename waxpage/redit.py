@@ -181,7 +181,7 @@ class CharMap:
         for achr in data:
             i = ord(achr)
             if i >= 256:
-                alts = self._other_symbols.get(i)
+                alts = self._other_symbol_map(i)
                 if alts:
                     chars = alts[0]
                 else:
@@ -193,6 +193,13 @@ class CharMap:
                     chars = self.alt_subst[i]
             s += chars
         return s
+
+    def _other_symbol_map(self, i):
+        """ Returns None if there are no other symbols to consider.
+            Or the special symbol if that is the case.
+        """
+        res = self._other_symbols.get(i) if self._other_symbols else None
+        return res
 
 
     @staticmethod
