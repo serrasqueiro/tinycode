@@ -1,12 +1,12 @@
 # txc.py  (c)2018, 2020  Henrique Moreira (part of 'waxpage')
 
 """
-  Test 'redit' module
+TXC - TeXt with Context
 
-  Compatibility: python 3.
+Compatibility: python 3.
 """
 
-# pylint: disable=invalid-name, unused-argument
+# pylint: disable=unused-argument
 
 
 import sys
@@ -60,11 +60,11 @@ def dump_texts(out, param, opts, debug=0) -> int:
     return 0
 
 
-def dump_file(out, name, doTXC, opts):
+def dump_file(out, name, do_txc, opts):
     """ Dump (text-like) file """
     codex = ""
     verbose = opts["verbose"]
-    kind = 1 if (doTXC or verbose > 0) else 0
+    kind = 1 if (do_txc or verbose > 0) else 0
     with open(name, "rb") as fbin:
         head = fbin.read(32)
     try:
