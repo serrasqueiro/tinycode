@@ -79,7 +79,6 @@ class CharMap:
         self._other_symbols = None
         if not allow:
             return
-        symb = list()
         self._other_symbols = dict()
         for tup in self.otherLookup:
             numeric = tup[0]
@@ -177,6 +176,7 @@ class CharMap:
         return None
 
     def _simple_string(self, data, altText):
+        # pylint: disable=unsubscriptable-object
         s = ""
         for achr in data:
             i = ord(achr)
@@ -185,7 +185,7 @@ class CharMap:
                 if alts:
                     chars = alts[0]
                 else:
-                    chars = "?"
+                    chars = "?"	# debug: f"({i}d=0x{i:x})"
             else:
                 if altText == 0:
                     chars = self.subst[i]
