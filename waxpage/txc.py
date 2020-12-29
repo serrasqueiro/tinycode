@@ -10,6 +10,7 @@ Compatibility: python 3.
 
 
 import sys
+import os
 from waxpage.redit import char_map, LATIN1_TEXT
 
 VALID_CODE_NAMES = (
@@ -25,6 +26,11 @@ DEF_DUMP_OPTS = {
     "verbose": 0,
     "simplify": True,
     "encode-out": "",
+    }
+
+DEF_TXC_TOLERATIONS = {
+    "header-mismatch-basename": False,
+    "last-line-empty": True,
     }
 
 
@@ -156,6 +162,128 @@ def what_code(coding) -> tuple:
 def valid_code_names():
     """ Returns a list/ tuple with valid code name(s) string(s) """
     return VALID_CODE_NAMES
+
+
+
+class FileText():
+    """ Basic class with utilities, for text files. """
+    def _from_fname(self, astr):
+        """ Returns the applicable header string from filename """
+        res = char_map.simpler_ascii(astr)
+        return res
+
+
+class FileTXC(FileText):
+    """ File of type: TeXt with Context """
+    name, msg = "", (0, "")
+    tolerate = DEF_TXC_TOLERATIONS
+
+    def __init__(self, name=None):
+        aname = name
+        if name:
+            self._read_text(name)
+        else:
+            aname = ""
+        if aname:
+            aname = os.path.basename(aname)
+        self.name = aname[:-4] if aname.endswith(".txc") else aname
+        self.lines, self.nodes = list(), list()
+
+    def _read_text(self, name) -> bool:
+        """ Reads TXC content """
+        tup = (2, "", "ascii")
+        try:
+            tup = read_txc(name, True)
+        except FileNotFoundError:
+            pass
+        self.error, self.data, self.codex = tup
+        return self.error == 0
+
+    def all_ok(self) -> bool:
+        """ Returns True if there are no bogus """
+        return self.error == 0
+
+    def parse(self) -> bool:
+        """ Returns True if file was successfully parsed.
+        """
+        lines = self.data.splitlines()
+        nodes = list()
+        is_ok, last_msg = self._parse_txc(lines, nodes)
+        self.msg = last_msg
+        if is_ok:
+            self.nodes = nodes
+            self.lines = lines
+        return is_ok
+
+    def _parse_txc(self, lines, nodes) -> tuple:
+        if not lines:
+            return True
+        has_head = lines[0].startswith("# ")
+        hdr = Node("header", (lines[0][2:],) if has_head else None)
+        nodes.append(hdr)
+        is_ok = hdr.linestr() == hdr.linestr().strip()
+        if not is_ok:
+            return False, (1, "Header is not trimmed")
+        if has_head:
+            is_ok = self._from_fname(self.name) == hdr.linestr()
+            idx = 1
+            next = lines[idx]
+            if next:
+                return False, (2, "Expected blank after header")
+            idx += 1
+        else:
+            idx = 0
+        if not is_ok:
+            if not self.tolerate["header-mismatch-basename"]:
+                return False, (1, "Header mismatches file basename")
+        payload = lines[idx:]
+        line_nr = idx
+        series = list()
+        for line in payload:
+            line_nr += 1
+            if line == "":
+                if not series:
+                    return False, (line_nr, "Unexpected empty line")
+                node = Node("item", series)
+                nodes.append(node)
+                series = list()
+            else:
+                series.append(line)
+            idx += 1
+        if series:
+            if not self.tolerate["last-line-empty"]:
+                return False, (line_nr, "Last line should be empty")
+            node = Node("item", series)
+            nodes.append(node)
+        return True, (0, "")
+
+
+class Node():
+    """ Text node (TXC) """
+    _VALID_NODES = (
+        "header",
+        "mark",
+        "item",
+        )
+
+    def __init__(self, kind, lines=None):
+        what = lines if lines else list()
+        assert isinstance(what, (list, tuple))
+        self.kind = kind
+        self.lines = what
+        assert kind in Node._VALID_NODES
+
+    def node_kind(self) -> str:
+        """ Returns the node kind! """
+        return self.kind
+
+    def linestr(self):
+        assert len(self.lines) == 1
+        return self.lines[0]
+
+    def as_string(self) -> str:
+        res = f"'{self.kind}'={self.lines}"
+        return res
 
 
 #
