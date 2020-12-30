@@ -242,7 +242,7 @@ class FileTXC(FileText):
         payload = text[int(self._payload_start > 0):]
         self.data = payload
         self.error = error
-        if "\n\n" in payload:
+        if "\n\n\n" in payload:
             self._separation = 2
         return error == 0
 
@@ -303,7 +303,7 @@ class FileTXC(FileText):
                         pass
                     else:
                         if empties != self._separation:
-                            amsg = f"Unexpected empty line (separation={self._separation}"
+                            amsg = f"Unexpected empty line (separation={self._separation})"
                             if self._separation > 1:
                                 return False, (line_nr, amsg)
                             return False, (line_nr, "Unexpected empty line")
