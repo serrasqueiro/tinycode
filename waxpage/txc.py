@@ -239,7 +239,7 @@ class FileTXC(FileText):
             if text.startswith('\n'):
                 self._payload_start += 1
         # Ignore first newline if file started with e.g. #-*- ISO-8859-1 -*-
-        payload = text[int(self._payload_start > 0):]
+        payload = text[int(self._payload_start > 1):]
         self.data = payload
         self.error = error
         if "\n\n\n" in payload:
