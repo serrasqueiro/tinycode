@@ -68,5 +68,8 @@ def posix_touch(path, dttm) -> bool:
     """ Touches file/ dir at 'path' """
     stamp = datetime.datetime.timestamp(dttm)
     u_time = (stamp, stamp)
-    os.utime(path, u_time)
+    try:
+        os.utime(path, u_time)
+    except FileNotFoundError:
+        return False
     return True
