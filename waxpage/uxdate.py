@@ -6,6 +6,7 @@ uxdate - Unix Dates helpers and wrappers.
 
 # pylint: disable=unused-argument
 
+import os
 import datetime
 import time
 from time import strptime
@@ -27,6 +28,14 @@ def date_from_cvs_entry_str(astr):
     dttm = datetime.datetime.fromtimestamp(timestamp)
     #dttm = datetime.date.fromtimestamp(timestamp)
     return dttm
+
+def date_from_cvs_v_format(astr):
+    """ Returns the datetime date for CVS 'astr' date,
+    Example:	2021.02.13.18.43.59; stands for 13-Feb.2021, at around 18:43!
+    """
+    fmt = "%Y.%m.%d.%H.%M.%S"
+    timestamp = time.mktime(strptime(astr, fmt))
+    return datetime.datetime.fromtimestamp(timestamp)
 
 def same_second(dttm1, dttm2) -> bool:
     """ Checks whether timestamps or dates match to the second granularity """
@@ -53,3 +62,11 @@ def basic_date(adate) -> str:
         dttm = adate
     astr = dttm.strftime(fmt)
     return astr
+
+
+def posix_touch(path, dttm) -> bool:
+    """ Touches file/ dir at 'path' """
+    stamp = datetime.datetime.timestamp(dttm)
+    u_time = (stamp, stamp)
+    os.utime(path, u_time)
+    return True
