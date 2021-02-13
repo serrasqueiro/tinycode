@@ -44,7 +44,6 @@ Options are:
 
 def runner(out, err, args) -> int:
     """ Main run """
-    verbose = 0
     param = args
     opts = {
         "verbose": 0,
