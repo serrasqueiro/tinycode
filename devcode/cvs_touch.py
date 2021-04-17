@@ -38,6 +38,7 @@ def main():
 
 Options are:
    -v          Verbose mode
+   -r          Recurse over local 'CVS/' directories
 """)
     sys.exit(code if code else 0)
 
