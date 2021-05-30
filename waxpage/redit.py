@@ -162,8 +162,7 @@ class CharMap:
         if isinstance(data, (int, float)):
             s = data
             return s
-        #print("simpler_ascii(): Unsupported type:", type( data ))
-        assert False
+        assert False, f"simpler_ascii(): Invalid type, '{type(data)}'"
         return s
 
 
