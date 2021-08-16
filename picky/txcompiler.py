@@ -22,7 +22,12 @@ def main():
     if code is None:
         print(f"""Usage:
 
-{prog} check [options] filename [filename ...]
+{prog} command [options] filename [filename ...]
+
+Commands are:
+   check       Checks and dumps basic TXC content
+
+   test        Tests TXC content
 
 Options are:
    -v          Verbose mode (shows Latin-1 accents, etc.)
@@ -51,6 +56,8 @@ def runner(out, err, args) -> int:
         return None
     if cmd == "check":
         code = check(out, err, param, opts)
+    if cmd == "test":
+        code = check(None, err, param, opts)
     return code
 
 
@@ -61,7 +68,7 @@ def check(out, err, param, opts) -> int:
     for name in param:
         code, msgs = check_file(out, name, opts)
         if code == 0:
-            if verbose > 0:
+            if verbose > 0 or out is None:
                 print("Checked:", name)
         else:
             _, first = msgs[0]
@@ -95,7 +102,9 @@ def check_file(out, name, opts):
         dump_everything(out, name, tfile)
         return 0, msgs
     for node in tfile.nodes:
-        print(nodified(node))
+        msg = nodified(node)
+        if out:
+            out.write(f"{msg}\n")
     return 0, msgs
 
 
