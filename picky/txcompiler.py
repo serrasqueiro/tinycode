@@ -37,7 +37,7 @@ Options are:
     sys.exit(code if code else 0)
 
 
-def runner(out, err, args) -> int:
+def runner(out, err, args):
     """ Dump file(s) """
     verbose = 0
     if not args:
@@ -56,9 +56,11 @@ def runner(out, err, args) -> int:
         return None
     if cmd == "check":
         code = check(out, err, param, opts)
+        return code
     if cmd == "test":
         code = check(None, err, param, opts)
-    return code
+        return code
+    return None
 
 
 def check(out, err, param, opts) -> int:
