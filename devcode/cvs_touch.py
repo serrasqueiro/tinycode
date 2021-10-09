@@ -43,7 +43,7 @@ Options are:
     sys.exit(code if code else 0)
 
 
-def runner(out, err, args) -> int:
+def runner(out, err, args):
     """ Main run """
     param = args
     opts = {
