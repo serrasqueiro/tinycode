@@ -427,7 +427,7 @@ def home_path() -> str:
 def dprint(what, *rest) -> bool:
     if not DEBUG:
         return False
-    assert what == 'dir'
+    assert what
     #astr = "{}".format('+'.join(rest))
     print(*rest)
     return True
