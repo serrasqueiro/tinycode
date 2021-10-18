@@ -48,7 +48,7 @@ def thunderbird_profile(path:str="") -> dict:
     # User at: C:/Users/$USER/AppData/Roaming/Thunderbird/profiles.ini
     appdata = os.environ.get("APPDATA")
     if appdata:
-        appdata = appdata.replace("\\", "/") + "/Roaming/"
+        appdata = appdata.replace("\\", "/").strip("/") + "/"
     else:
         appdata = os.environ["HOME"] + "/."
     appdata += "thunderbird" if is_unix() else "Thunderbird"
