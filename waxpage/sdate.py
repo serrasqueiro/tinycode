@@ -1,11 +1,12 @@
 # sdate.py  (c)2020  Henrique Moreira
 
-"""
-  sdate - Easy hard-coded functions to convert dates
+""" sdate - Easy hard-coded functions to convert dates
 
   Compatibility: python 3.
 """
-# pylint: disable=unused-argument
+
+# pylint: disable=missing-function-docstring
+
 
 import datetime
 
@@ -34,6 +35,52 @@ def dttm_from_ux_stamp(stamp):
     #	... epoch.__str__() = '1970-01-01 01:00:00'
     assert isinstance(stamp, (int, float))
     return datetime.datetime.fromtimestamp(stamp)
+
+
+class Datex():
+    """ Keeps Gregorian date in the object.
+    You can easily use Linux epoch_day() here.
+    """
+    _invalid = datetime.date(1971, 1, 1)
+    _invalid_str = "-"
+
+    def __init__(self, obj=None):
+        if obj is None:
+            self._date = Datex._invalid
+        elif isinstance(obj, (datetime.date, datetime.datetime)):
+            self._set_from_dttm(obj)
+        else:
+            self._set_from_data(obj)
+        self._greg_ord = self._date.toordinal()
+
+    def _set_from_dttm(self, obj):
+        self._date = datetime.date(obj.year, obj.month, obj.day)
+
+    def _set_from_data(self, adate):
+        try:
+            dttm = datetime.datetime.strptime(adate, "%Y-%m-%d")
+        except ValueError:
+            dttm = datetime.datetime.strptime(adate, "%Y-%m-%d %H:%M")
+        self._date = dttm
+
+    def __str__(self) -> str:
+        if self.epoch_day() <= 0:
+            return Datex._invalid_str
+        return self._date.strftime("%Y-%m-%d")
+
+    def ordinal(self) -> int:
+        assert self._greg_ord >= 0
+        return self._greg_ord
+
+    def from_ordinal(self, greg_ord:int):
+        assert greg_ord >= 0
+        self._date = datetime.datetime.fromordinal(greg_ord)
+        self._greg_ord = greg_ord
+
+    def epoch_day(self) -> int:
+        delta = self._greg_ord - datetime.date(1971, 1, 1).toordinal()
+        assert delta >= 0
+        return delta
 
 
 #

@@ -63,11 +63,20 @@ def test_date(param) -> int:
         print("")
     return 0
 
+
 def dump_dates(now):
     shown = sdate.date_to_string(now)
     print(f"date_to_string() = {shown}")
     shown = sdate.datetime_to_string(now)
     print(f"datetime_to_string() = {shown}")
+    dtx = sdate.Datex("2022-01-16")
+    print(dtx, "; epoch_day():", dtx.epoch_day())
+    greg = dtx.ordinal()
+    assert sdate.Datex("1971-01-01").epoch_day() == 0
+    back = sdate.Datex()
+    back.from_ordinal(greg)
+    assert str(back) == "2022-01-16"
+    assert back.epoch_day() == dtx.epoch_day()
 
 
 #
