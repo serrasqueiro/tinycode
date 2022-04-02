@@ -14,11 +14,11 @@ import re
 
 BASIC_DICT = {
     "@mail.server": dict(),
-    }
+}
 
 IGNORED_MAIL_ITEMS = (
     "serverIDResponse",
-    )
+)
 
 
 def main():
@@ -68,14 +68,16 @@ class Prefs(Content):
     lines = list()
     assign = None
 
-    def __init__(self, fname=""):
+    def __init__(self, fname="", auto_parse=True):
         self.lines = list()
         self._errors, self.cont = 0, list()
         self.assign = BASIC_DICT
-        if fname:
-            self._read_file(fname)
         rex = r'user_pref\("(?P<left>[^"]*)", (?P<right>.*)\);'
         self.decl_rex = re.compile(rex)
+        if fname:
+            self._read_file(fname)
+            if auto_parse:
+                self.parse()
 
     def _read_file(self, fname):
         self.lines = open(fname, "r").readlines()
@@ -99,6 +101,21 @@ class Prefs(Content):
                 if self.err:
                     self.err.write(f"Invalid line {idx}: {line}\n")
         return self._errors == 0
+
+    def get_server_list(self):
+        alen = len("server")
+        adict = self.assign["@mail.server"]
+        alist = sorted(adict, key=lambda v: int(v[alen:]))
+        return alist
+
+    def dir_tuples(self) -> list:
+        """ Return a list with tuples
+		mail.server.serverN.directory, unix_path
+                (a pair: key and path)
+        """
+        tups = [(key, self.assign[key].replace("\\\\", "/")) for key in sorted(self.assign) if key.endswith(".directory")]
+        # for a, b in tpref.dir_tuples(): print(a, b)
+        return tups
 
     def _add(self, line, matched) -> bool:
         specials = ("mail.server",
