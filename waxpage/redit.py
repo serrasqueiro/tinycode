@@ -14,9 +14,10 @@
 import sys
 import string
 
+DEBUG = 0
 LATIN1_TEXT = "ISO-8859-1"
 
-_LATIN_CONV = (
+LATIN_CONV = (
     (0xc1, 'A', "A'"),  # A-acute
     (0xc9, 'E', "E'"),  # E-acute
     (0xcd, 'I', "I'"),  # I-acute
@@ -46,13 +47,15 @@ _LATIN_CONV = (
     (0xc7, 'C', "C,"),  # C-cedil
     (0xe7, 'c', "c,"),  # c-cedil
     #	(8212, '-', "--"),  # m-dash (&mdash;)
-    (0x0, '', ''))
+    (0x0, '', '')
+)
 
 # See for instance:
 #	https://www.w3schools.com/charsets/ref_html_entities_a.asp
 
 
-_OTHER_LOOKUP_LIST = [
+OTHER_LOOKUP_LIST = [
+    (0x80,   "(EURO)", "&euro;", "Euro sign", 0),
     (0xae,   "(R)", "&reg;", "Registered trademark", 0),
     (0xab,   "<<", "&laquo;", "Angle quotation mark (left)", 1),
     (0xbb,   ">>", "&raquo;", "Angle quotation mark (right)", 1),
@@ -63,7 +66,7 @@ _OTHER_LOOKUP_LIST = [
     (0x201c, '"', "&ldquo;", "Left double quotation mark", 2),  # inverted open double-quotes
     (0x201d, '"', "&rdquo;", "Right double quotation mark", 2),  # inverted open double-quotes
     (0x0, "", "", "", -1)
-    ]
+]
 
 
 class CharMap:
@@ -91,11 +94,10 @@ class CharMap:
         self.alt_subst = ['.'] * 256
         # Hint: for Unicode Character Map, e.g. UCS2 value 0x201c,
         #       see https://unicodemap.org/details/0x201c/index.html
-        self.otherLookup = _OTHER_LOOKUP_LIST
-        conv = _LATIN_CONV
+        other = self._init_other_lookup(OTHER_LOOKUP_LIST)
+        conv = LATIN_CONV
         # Check if there are any repeated ASCII values
-        idx = 0
-        for tup in conv:
+        for idx, tup in enumerate(conv):
             assert len(tup) == 3
             asciiValue = tup[0]
             if asciiValue==0:
@@ -103,38 +105,12 @@ class CharMap:
             assert asciiValue >= 32
             for ch in conv[idx+1:]:
                 assert asciiValue != ch[0]
-            idx += 1
-        idx = 0
-        for tup in self.otherLookup:
-            assert len(tup) == 5
-            assert isinstance(tup[0], int)
-            assert isinstance(tup[1], str)
-            assert isinstance(tup[2], str)
-            assert isinstance(tup[3], str)
-            asciiValue = tup[0]
-            if asciiValue == 0:
-                break
-            for ch in self.otherLookup[idx+1:]:
-                assert asciiValue != ch[0]
-            idx += 1
         # Start indexing:
-        idx = ord(' ')
-        while idx <= 255:
-            if 32 <= idx < 127:
-                chars = chr(idx)
-                alt_chars = chars
-            else:
-                chars = "."
-                alt_chars = chars
-                for tup in conv:
-                    val = tup[0]
-                    if val == idx:
-                        chars = tup[1]
-                        alt_chars = tup[2]
-                        break
+        for idx in range(32, 256):
+            chars, alt_chars = self._chars_from_ascii(idx, conv, other)
             self.subst[idx] = chars
             self.alt_subst[idx] = alt_chars
-            idx += 1
+            dprint(f"::: {idx} = 0x{idx:02x} alt_chars: {alt_chars}")
         for nc in ['\t', '\n']:
             self.subst[ord(nc)] = nc
             self.alt_subst[ord(nc)] = nc
@@ -142,6 +118,28 @@ class CharMap:
             self.subst[ord(nc)] = ""
             self.alt_subst[ord(nc)] = ""
         return True
+
+    def _chars_from_ascii(self, ascii_val, conv, other) -> tuple:
+        chars = chr(ascii_val)
+        if ascii_val < 127:
+            return chars, chars
+        chars = "."
+        alt_chars = "." if other.get(ascii_val) is None else other.get(ascii_val)
+        for val, letra, alt_chars in conv:
+            if val <= 0:
+                return chars, chars
+            if val == ascii_val:
+                return letra, alt_chars
+        return chars, chars
+
+    def _init_other_lookup(self, look):
+        res = {}
+        self.otherLookup = look
+        for val, alt_str, _, desc, code_mark in look:
+            if code_mark > 0:
+                continue
+            res[val] = alt_str
+        return res
 
 
     def simpler_ascii(self, data, alt_text=0):
@@ -157,17 +155,15 @@ class CharMap:
                 res.append((k, s))
             return res
         if isinstance(data, (int, float)):
-            s = data
-            return s
+            return data
         assert False, f"simpler_ascii(): Invalid type, '{type(data)}'"
         return s
 
 
-    def find_other_lookup(self, asciiNum):
-        assert isinstance(asciiNum, int)
+    def find_other_lookup(self, ascii_val):
+        assert isinstance(ascii_val, int)
         for tup in self.otherLookup:
-            a = tup[0]
-            if a == asciiNum:
+            if tup[0] == ascii_val:
                 return tup
         return None
 
@@ -175,18 +171,18 @@ class CharMap:
         # pylint: disable=unsubscriptable-object
         s = ""
         for achr in data:
-            i = ord(achr)
-            if i >= 256:
-                alts = self._other_symbol_map(i)
+            val = ord(achr)
+            if val >= 256:
+                alts = self._other_symbol_map(val)
                 if alts:
                     chars = alts[0]
                 else:
                     chars = "?"	# debug: f"({i}d=0x{i:x})"
             else:
                 if alt_text == 0:
-                    chars = self.subst[i]
+                    chars = self.subst[val]
                 else:
-                    chars = self.alt_subst[i]
+                    chars = self.alt_subst[val]
             s += chars
         return s
 
@@ -572,6 +568,12 @@ def any_chr_rev(aStr, anyChr):
         if found:
             return idx
     return -1
+
+def dprint(*kwargs, **args):
+    if DEBUG <= 0:
+        return True
+    print(*kwargs, **args)
+    return True
 
 
 #
