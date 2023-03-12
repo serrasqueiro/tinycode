@@ -1,4 +1,4 @@
-# redit.py  (c)2020  Henrique Moreira
+# redit.py  (c)2020...2023  Henrique Moreira
 
 """
   redit - Common functions to streams and files.
@@ -8,7 +8,7 @@
 # Replaces old 'redito' module.
 
 # pylint: disable=missing-docstring, unused-argument, invalid-name
-# pylint: disable=too-many-instance-attributes, no-self-use
+# pylint: disable=too-many-instance-attributes
 
 
 import sys
@@ -79,7 +79,7 @@ class CharMap:
         self._other_symbols = None
         if not allow:
             return
-        self._other_symbols = dict()
+        self._other_symbols = {}
         for tup in self.otherLookup:
             numeric = tup[0]
             if numeric <= 0:
@@ -144,19 +144,16 @@ class CharMap:
         return True
 
 
-    def simpler_ascii(self, data, altText=0) -> str:
+    def simpler_ascii(self, data, alt_text=0):
         s = ""
         if isinstance(data, str):
-            return self._simple_string(data, altText)
+            return self._simple_string(data, alt_text)
         if isinstance(data, (list, tuple)):
-            res = []
-            for a in data:
-                res.append(self.simpler_ascii(a, altText))
-            return res
+            return [self._simple_string(item, alt_text) for item in data]
         if isinstance(data, dict):
             res = []
             for k, val in data.items():
-                s = self.simpler_ascii(val, altText)
+                s = self.simpler_ascii(val, alt_text)
                 res.append((k, s))
             return res
         if isinstance(data, (int, float)):
@@ -174,7 +171,7 @@ class CharMap:
                 return tup
         return None
 
-    def _simple_string(self, data, altText):
+    def _simple_string(self, data, alt_text):
         # pylint: disable=unsubscriptable-object
         s = ""
         for achr in data:
@@ -186,7 +183,7 @@ class CharMap:
                 else:
                     chars = "?"	# debug: f"({i}d=0x{i:x})"
             else:
-                if altText == 0:
+                if alt_text == 0:
                     chars = self.subst[i]
                 else:
                     chars = self.alt_subst[i]
